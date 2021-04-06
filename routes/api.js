@@ -2,6 +2,7 @@
 /** DB **/
 require('dotenv').config();
 const mongoose = require("mongoose");
+mongoose.set('useFindAndModify', false);
 var IssueModel = require('../models/issue_model.js');
 
 // mongoose connection
@@ -22,20 +23,9 @@ module.exports = function (app) {
 
     app.route('/api/issues/:project')
 
-       /* .get(function (req, res) {
-            let project = req.params.project;
-
-            var result = [];
-            IssueModel.find(req.query, function (err, issues) {
-                for (var i = 0; i < issues.length; i++) {
-                    result.push(issues[i]);
-                }
-                return res.json(issues);
-            });
-        })*/
 
         .get(function (req, res){
-          var project = req.params.project;
+          var project = req.params.project;          
           let filterObject = Object.assign(req.query);
           filterObject['project'] =project;
           IssueModel.find(
@@ -90,9 +80,10 @@ module.exports = function (app) {
                   updateObj[key] = req.body[key];
                 }
             });
-            if (req.body._id == "" ||!req.body.hasOwnProperty('_id')) {
-                return res.json({ error: 'missing _id' });
-            } else if (Object.keys(updateObj).length < 2) {
+            //console.log(Object.keys(updateObj).length);
+            if (!req.body._id) {
+              return res.json({ error: 'missing _id' });
+            } else if (Object.keys(updateObj).length < 2 ) {
                  return res.json({ error: 'no update field(s) sent', '_id': req.body._id });
             } else {
               IssueModel.findByIdAndUpdate(req.body._id, req.body,  (error, updatedIssue) => {
@@ -114,9 +105,9 @@ module.exports = function (app) {
           }                
           IssueModel.findByIdAndRemove(req.body._id, (error, deletedIssue) => {
             if(!error && deletedIssue){
-              res.json({ result: 'successfully deleted', '_id': req.body._id })
+              return res.json({ result: 'successfully deleted', '_id': req.body._id })
             }else if(!deletedIssue){
-              res.json({ error: 'could not delete', '_id': req.body._id })
+              return res.json({ error: 'could not delete', '_id': req.body._id })
             }
           })
             

@@ -13,7 +13,7 @@ suite('Functional Tests', function() {
 //Create an issue with every field: POST request to /api/issues/{project}
 test('Create an issue with every field', function(done) {
       chai.request(server)
-      .post('/api/issues/testapi')
+      .post('/api/issues/apitest')
       .send({  'issue_title': 'Test title','issue_text': 'Test text', 'created_by': 'Test created by','assigned_to': 'Test assigned to','status_text': 'Test status text' })
       .end(function (err, res) {       
         expect(err).to.be.null;
@@ -26,7 +26,7 @@ test('Create an issue with every field', function(done) {
 //Create an issue with only required fields: POST request to /api/issues/{project}
 test('Create an issue with only required fields', function(done) {
       chai.request(server)
-      .post('/api/issues/testapi')
+      .post('/api/issues/apitest')
       .send({  'issue_title': 'Test title','issue_text': 'Test text', 'created_by': 'Test created by' })
       .end(function (err, res) {
         expect(err).to.be.null;
@@ -39,7 +39,7 @@ test('Create an issue with only required fields', function(done) {
 //Create an issue with missing required fields: POST request to /api/issues/{project}
 test('Create an issue with missing required fields', function(done) {
       chai.request(server)
-      .post('/api/issues/testapi')
+      .post('/api/issues/apitest')
       .send({})
       .end(function (err, res) {
         expect(err).to.be.null;
@@ -52,7 +52,7 @@ test('Create an issue with missing required fields', function(done) {
 //View issues on a project: GET request to /api/issues/{project}
 test('View issues on a project', function(done) {
       chai.request(server)
-      .get('/api/issues/testapi')
+      .get('/api/issues/apitest')
       .end(function (err, res) {
         expect(err).to.be.null;
         expect(res).to.have.status(200);
@@ -61,11 +61,16 @@ test('View issues on a project', function(done) {
         done()
       });
 });
+
+
+
 //View issues on a project with one filter: GET request to /api/issues/{project}
 test('View issues on a project with one filter', function(done) {
       chai.request(server)
-      .get('/api/issues/apitest?issue_title=Test%20title')
+      .get('/api/issues/apitest')
+      .query({ issue_title: "Test title" })
       .end(function (err, res) {
+        //console.log(res.body);
         expect(err).to.be.null;
         expect(res).to.have.status(200);
         assert.isObject(res);
@@ -90,14 +95,14 @@ test('View issues on a project with multiple filter', function(done) {
 test('Update one field on an issue', function(done) {
     IssueModel.findOne({ issue_title: 'Test title' }, function (err, issue) {
     chai.request(server)
-        .put('/api/issues/testapi')
+        .put('/api/issues/apitest')
         .send({  '_id': issue._id,'issue_title': 'Test title updated'})
         .end(function (err, res) {
         /// console.log(res.text);
           expect(err).to.be.null;
           expect(res).to.have.status(200);
           assert.isObject(res);
-          assert.include(res.text,"issue_title",'Test title updated');
+          assert.include(res.text,'successfully updated');
           done()
       });
 
@@ -107,14 +112,14 @@ test('Update one field on an issue', function(done) {
 test('Update multiple fields on an issue', function(done) {
     IssueModel.findOne({ issue_title: 'Test title' }, function (err, issue) {
     chai.request(server)
-        .put('/api/issues/testapi')
+        .put('/api/issues/apitest')
         .send({  '_id': issue._id,'issue_title': 'Test title updated','issue_text': 'Test text updated','created_by':'Test created by updated' })
         .end(function (err, res) {
         /// console.log(res.text);
           expect(err).to.be.null;
           expect(res).to.have.status(200);
           assert.isObject(res);
-          assert.include(res.text,"issue_title",'Test title updated','issue_text','Test text updated','created_by','Test created by  updated');
+          assert.include(res.text,'successfully updated');
           done()
       });
 
@@ -124,7 +129,7 @@ test('Update multiple fields on an issue', function(done) {
 test('Update an issue with missing _id', function(done) {
    
     chai.request(server)
-        .put('/api/issues/testapi')
+        .put('/api/issues/apitest')
         .send({ '_id':"",'issue_title': 'Test title updated','issue_text': 'Test text updated','created_by':'Test created by updated' })
         .end(function (err, res) {
          console.log(res.text);
@@ -139,8 +144,8 @@ test('Update an issue with missing _id', function(done) {
 test('Update an issue with no fields to update', function(done) {
     IssueModel.findOne({ issue_title: 'Test title updated' }, function (err, issue) {
     chai.request(server)
-        .put('/api/issues/testapi')
-        .send({ '_id': issue._id, 'issue_title': '','issue_text': '','created_by':'', 'assigned_to':'', 'status_text':''})
+        .put('/api/issues/apitest')
+        .send({ '_id': issue._id})
         .end(function (err, res) {
         /// console.log(res.text);
           expect(err).to.be.null;
@@ -154,18 +159,17 @@ test('Update an issue with no fields to update', function(done) {
 });
 //Update an issue with an invalid _id: PUT request to /api/issues/{project}
 test('Update an issue with an invalid _id', function(done) {
-    IssueModel.findOne({ issue_title: 'Test title updated' }, function (err, issue) {
+    
     chai.request(server)
-        .put('/api/issues/testapi')
-        .send({ '_id': issue._id+'1111' })
+        .put('/api/issues/apitest')
+        .send({ _id: '1111',  issue_title: 'Test title updated'})
         .end(function (err, res) {
         /// console.log(res.text);
           expect(err).to.be.null;
           expect(res).to.have.status(200);
           assert.isObject(res);
           assert.include(res.text,"could not update");
-          done()
-      });
+          done()     
 
     });  
 });
@@ -173,8 +177,8 @@ test('Update an issue with an invalid _id', function(done) {
 test('Delete an issue', function(done) {
     IssueModel.findOne({ issue_title: 'Test title updated' }, function (err, issue) {
     chai.request(server)
-        .delete('/api/issues/testapi')
-        .send({ '_id': issue._id })
+        .delete('/api/issues/apitest')
+        .send({ _id:issue._id })
         .end(function (err, res) {
         /// console.log(res.text);
           expect(err).to.be.null;
@@ -188,10 +192,10 @@ test('Delete an issue', function(done) {
 });
 //Delete an issue with an invalid _id: DELETE request to /api/issues/{project}
 test('Delete an issue with an invalid _id', function(done) {
-    IssueModel.findOne({ issue_title: 'Test title' }, function (err, issue) {
+    
     chai.request(server)
-        .delete('/api/issues/testapi')
-        .send({ '_id': issue._id+'1111' })
+        .delete('/api/issues/apitest')
+        .send({_id: '1111' })
         .end(function (err, res) {
         /// console.log(res.text);
           expect(err).to.be.null;
@@ -201,13 +205,13 @@ test('Delete an issue with an invalid _id', function(done) {
           done()
       });
 
-    });  
+      
 });
 //Delete an issue with missing _id: DELETE request to /api/issues/{project}
 test('Delete an issue with missing _id', function(done) {
    
     chai.request(server)
-        .delete('/api/issues/testapi')
+        .delete('/api/issues/apitest')
         .send({ })
         .end(function (err, res) {
         /// console.log(res.text);
