@@ -22,7 +22,7 @@ module.exports = function (app) {
 
     app.route('/api/issues/:project')
 
-        .get(function (req, res) {
+       /* .get(function (req, res) {
             let project = req.params.project;
 
             var result = [];
@@ -30,72 +30,96 @@ module.exports = function (app) {
                 for (var i = 0; i < issues.length; i++) {
                     result.push(issues[i]);
                 }
-                res.json(issues);
+                return res.json(issues);
             });
+        })*/
+
+        .get(function (req, res){
+          var project = req.params.project;
+          let filterObject = Object.assign(req.query);
+          filterObject['project'] =project;
+          IssueModel.find(
+            filterObject,
+            (error, issues) => {
+              if(!error && issues){
+                return res.json(issues)
+              }
+            }
+          )
         })
 
         .post(function (req, res, next) {
-           
-            if (
-              req.body.issue_title == "" || req.body.issue_text == "" || req.body.created_by == ""
-              || req.body.issue_title == undefined || req.body.issue_text == undefined || req.body.created_by == undefined
-              ) {
-                 res.json({error: 'required field(s) missing'}).end();
+           var project = req.params.project;
+
+          if (
+            req.body.issue_title == "" || req.body.issue_text == "" || req.body.created_by == ""
+            || req.body.issue_title == undefined || req.body.issue_text == undefined || req.body.created_by == undefined
+            ) 
+            {
+                return res.json({
+                  error: 'required field(s) missing' 
+                })
                 
             } else {
-              var issue = new IssueModel(req.body);
+              var issue = new IssueModel({
+                issue_title: req.body.issue_title,
+                issue_text: req.body.issue_text,
+                created_by: req.body.created_by,
+                assigned_to: req.body.assigned_to || '',
+                status_text: req.body.status_text || '',
+                open: true,
+                created_on: new Date().toUTCString(),
+                updated_on: new Date().toUTCString(),
+                project: project
+              }); 
 
-            issue.save(function (err) {
-                if (err) return console.log(err);
-                if (!issue.hasOwnProperty('assigned_to')) {
-                    issue.assigned_to = "";
+              issue.save((error, savedIssue) => {
+                if(!error && savedIssue){
+                  return res.json(savedIssue)
                 }
-                if (!issue.hasOwnProperty('status_text')) {
-                    issue.status_text = "";
-                }
-                res.json(issue);
-            });
-            }
-           
-
+              })
+            }         
 
         })
 
         .put(function (req, res) {
-            
+            var project = req.params.project;
+            let updateObj = {};
+            Object.keys(req.body).forEach((key) => {
+                if (req.body[key] != '') {
+                  updateObj[key] = req.body[key];
+                }
+            });
             if (req.body._id == "" ||!req.body.hasOwnProperty('_id')) {
-                res.json({ error: 'missing _id'});
-            } else if (req.body.issue_title == "" && req.body.issue_text == "" && req.body.created_by == "" && req.body.assigned_to == "" && req.body.status_text == "") {
-                res.json({error: 'no update field(s) sent', '_id': req.body._id});
+                return res.json({ error: 'missing _id' });
+            } else if (Object.keys(updateObj).length < 2) {
+                 return res.json({ error: 'no update field(s) sent', '_id': req.body._id });
             } else {
-            console.log(req.body._id);
-            IssueModel.findByIdAndUpdate(req.body._id, req.body, function (err, issue) {
-                if (err) res.json({error: 'could not update', '_id': req.body._id});
-            });
-
-            IssueModel.findById(req.body._id, function (err, issue) {
-                res.json(issue);
-            });
+              IssueModel.findByIdAndUpdate(req.body._id, req.body,  (error, updatedIssue) => {
+                if (updatedIssue) {
+                  return res.json({ result: 'successfully updated', '_id': req.body._id });
+                } else {
+                  return res.json({ error: 'could not update', '_id': req.body._id });
+                }
+              });
             }
 
 
         })
 
         .delete(function (req, res) {
-          console.log(req.body);
-            if (req.body._id == "" || !req.body.hasOwnProperty('_id')) {
-                res.json({error: 'missing _id'});
-                console.log("yes");
-            } else {
-                console.log("no");
-                  IssueModel.findByIdAndDelete(req.body._id, function (err, docs) {
-                      if (err) {
-                          res.json({error: 'could not delete', '_id': req.body._id});
-                      } else {
-                          res.json({result: 'successfully deleted', '_id': req.body._id});
-                      }
-                  });
+          var project = req.params.project;
+          if(!req.body._id){
+            return res.json({ 'error': 'missing _id' })
+          }                
+          IssueModel.findByIdAndRemove(req.body._id, (error, deletedIssue) => {
+            if(!error && deletedIssue){
+              res.json({ result: 'successfully deleted', '_id': req.body._id })
+            }else if(!deletedIssue){
+              res.json({ error: 'could not delete', '_id': req.body._id })
             }
+          })
+            
 
 
         });

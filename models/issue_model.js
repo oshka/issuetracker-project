@@ -35,6 +35,17 @@ var IssueSchema = new Schema({
     status_text: {
         type: String,
     },
+    project: {
+        type: String,
+    },
 
+});
+IssueSchema.pre('save', function(next){
+  now = new Date();
+  this.updated_on = now;
+  if ( !this.created_on ) {
+    this.created_on = now;
+  }
+  next();
 });
 module.exports = mongoose.model('issue', IssueSchema);     
