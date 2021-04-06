@@ -1,7 +1,8 @@
 'use strict';
 /** DB **/
+require('dotenv').config();
 const mongoose = require("mongoose");
-mongoose.connect(process.env.DB || "mongodb://localhost/exercise-track");
+var IssueModel = require('../models/issue_model.js');
 
 // mongoose connection
 mongoose.connect(
@@ -14,43 +15,7 @@ mongoose.connect(
             console.log('Connected to Server successfully!');
         }
     });
-var Issue = new mongoose.Schema({
-    issue_title: {
-        type: String,
-        required: true
-    },
-    issue_text: {
-        type: String,
-        required: true
-    },
-    created_on: {
-        type: Date,
-        // `Date.now()` returns the current unix timestamp as a number
-        default: Date.now
-    },
-    updated_on: {
-        type: Date,
-        // `Date.now()` returns the current unix timestamp as a number
-        default: Date.now
-    },
-    created_by: {
-        type: String,
-        required: true
-    },
-    assigned_to: {
-        type: String,
-    },
 
-    open: {
-        type: Boolean,
-        default: true
-    },
-    status_text: {
-        type: String,
-    },
-
-});
-var IssueModel = mongoose.model('Issue', Issue);
 
 /** DB **/
 module.exports = function (app) {
@@ -69,12 +34,16 @@ module.exports = function (app) {
             });
         })
 
-        .post(function (req, res) {
-            let project = req.params.project;
-            if (req.body.issue_title == "" || req.body.issue_text == "" || req.body.created_by == "") {
-                res.json({error: 'required field(s) missing'});
-            }
-            var issue = new IssueModel(req.body);
+        .post(function (req, res, next) {
+           
+            if (
+              req.body.issue_title == "" || req.body.issue_text == "" || req.body.created_by == ""
+              || req.body.issue_title == undefined || req.body.issue_text == undefined || req.body.created_by == undefined
+              ) {
+                 res.json({error: 'required field(s) missing'}).end();
+                
+            } else {
+              var issue = new IssueModel(req.body);
 
             issue.save(function (err) {
                 if (err) return console.log(err);
@@ -86,18 +55,20 @@ module.exports = function (app) {
                 }
                 res.json(issue);
             });
+            }
+           
 
 
         })
 
         .put(function (req, res) {
-            let project = req.params.project;
-            if (req.body._id == "") {
-                res.json({error: 'required field(s) missing'});
+            
+            if (req.body._id == "" ||!req.body.hasOwnProperty('_id')) {
+                res.json({ error: 'missing _id'});
             } else if (req.body.issue_title == "" && req.body.issue_text == "" && req.body.created_by == "" && req.body.assigned_to == "" && req.body.status_text == "") {
                 res.json({error: 'no update field(s) sent', '_id': req.body._id});
-            }
-            console.log(req.body);
+            } else {
+            console.log(req.body._id);
             IssueModel.findByIdAndUpdate(req.body._id, req.body, function (err, issue) {
                 if (err) res.json({error: 'could not update', '_id': req.body._id});
             });
@@ -105,22 +76,28 @@ module.exports = function (app) {
             IssueModel.findById(req.body._id, function (err, issue) {
                 res.json(issue);
             });
+            }
+
 
         })
 
         .delete(function (req, res) {
-            let project = req.params.project;
-            if (req.body._id == "") {
+          console.log(req.body);
+            if (req.body._id == "" || !req.body.hasOwnProperty('_id')) {
                 res.json({error: 'missing _id'});
+                console.log("yes");
+            } else {
+                console.log("no");
+                  IssueModel.findByIdAndDelete(req.body._id, function (err, docs) {
+                      if (err) {
+                          res.json({error: 'could not delete', '_id': req.body._id});
+                      } else {
+                          res.json({result: 'successfully deleted', '_id': req.body._id});
+                      }
+                  });
             }
 
-            IssueModel.findByIdAndDelete(req.body._id, function (err, docs) {
-                if (err) {
-                    res.json({error: 'could not delete', '_id': req.body._id});
-                } else {
-                    res.json({result: 'successfully deleted', '_id': req.body._id});
-                }
-            });
+
         });
 
 };
