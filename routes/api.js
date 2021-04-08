@@ -1,4 +1,5 @@
 'use strict';
+
 /** DB **/
 require('dotenv').config();
 const mongoose = require("mongoose");
@@ -8,10 +9,10 @@ var IssueModel = require('../models/issue_model.js');
 // mongoose connection
 mongoose.connect(
     process.env.DB,
-    {useCreateIndex: true, useNewUrlParser: true, useUnifiedTopology: true},
+    {useCreateIndex: true, useNewUrlParser: true, useUnifiedTopology: true },
     function (err, db) {
         if (err) {
-            console.log('Unable to connect to the server. Please start the server. Error1:', err);
+            console.log('Unable to connect to the server. Please start the server. Error:', err);
         } else {
             console.log('Connected to Server successfully!');
         }

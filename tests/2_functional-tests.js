@@ -1,7 +1,6 @@
 const chaiHttp = require('chai-http');
 const chai = require('chai');
 const assert = chai.assert;
-var expect = chai.expect;
 const server = require('../server');
 const apiRoutes         = require('../routes/api.js');
 var IssueModel = require('../models/issue_model.js');
@@ -16,8 +15,7 @@ test('Create an issue with every field', function(done) {
       .post('/api/issues/apitest')
       .send({  'issue_title': 'Test title','issue_text': 'Test text', 'created_by': 'Test created by','assigned_to': 'Test assigned to','status_text': 'Test status text' })
       .end(function (err, res) {       
-        expect(err).to.be.null;
-        expect(res).to.have.status(200);
+        assert.equal(res.status, 200);
         assert.isObject(res);
         assert.include(res.text,"issue_title",'Test title','issue_text','Test text','created_by','Test created by','assigned_to','Test assigned to','status_text','Test status text');
         done()
@@ -29,8 +27,7 @@ test('Create an issue with only required fields', function(done) {
       .post('/api/issues/apitest')
       .send({  'issue_title': 'Test title','issue_text': 'Test text', 'created_by': 'Test created by' })
       .end(function (err, res) {
-        expect(err).to.be.null;
-        expect(res).to.have.status(200);
+        assert.equal(res.status, 200);
         assert.isObject(res);
         assert.include(res.text,"issue_title",'Test title','issue_text','Test text','created_by','Test created by');
         done()
@@ -42,8 +39,7 @@ test('Create an issue with missing required fields', function(done) {
       .post('/api/issues/apitest')
       .send({})
       .end(function (err, res) {
-        expect(err).to.be.null;
-        expect(res).to.have.status(200);
+        assert.equal(res.status, 200);
         assert.isObject(res);
         assert.include(res.text,"required field(s) missing");
         done()
@@ -54,8 +50,7 @@ test('View issues on a project', function(done) {
       chai.request(server)
       .get('/api/issues/apitest')
       .end(function (err, res) {
-        expect(err).to.be.null;
-        expect(res).to.have.status(200);
+        assert.equal(res.status, 200);
         assert.isObject(res);
         assert.include(res.text,"issue_title",'Test title','issue_text','Test text','created_by','Test created by');
         done()
@@ -71,8 +66,7 @@ test('View issues on a project with one filter', function(done) {
       .query({ issue_title: "Test title" })
       .end(function (err, res) {
         //console.log(res.body);
-        expect(err).to.be.null;
-        expect(res).to.have.status(200);
+        assert.equal(res.status, 200);
         assert.isObject(res);
         assert.include(res.text,"issue_title",'Test title');
         done()
@@ -83,8 +77,7 @@ test('View issues on a project with multiple filter', function(done) {
       chai.request(server)
       .get('/api/issues/apitest?issue_title=Test%20title&issue_text=Test%20text')
       .end(function (err, res) {        
-        expect(err).to.be.null;
-        expect(res).to.have.status(200);
+        assert.equal(res.status, 200);
         assert.isObject(res);
         assert.include(res.text,"issue_title",'Test title',"issue_text",'Test text');
         done()
@@ -99,8 +92,7 @@ test('Update one field on an issue', function(done) {
         .send({  '_id': issue._id,'issue_title': 'Test title updated'})
         .end(function (err, res) {
         /// console.log(res.text);
-          expect(err).to.be.null;
-          expect(res).to.have.status(200);
+          assert.equal(res.status, 200);
           assert.isObject(res);
           assert.include(res.text,'successfully updated');
           done()
@@ -116,8 +108,7 @@ test('Update multiple fields on an issue', function(done) {
         .send({  '_id': issue._id,'issue_title': 'Test title updated','issue_text': 'Test text updated','created_by':'Test created by updated' })
         .end(function (err, res) {
         /// console.log(res.text);
-          expect(err).to.be.null;
-          expect(res).to.have.status(200);
+          assert.equal(res.status, 200);
           assert.isObject(res);
           assert.include(res.text,'successfully updated');
           done()
@@ -133,8 +124,7 @@ test('Update an issue with missing _id', function(done) {
         .send({ '_id':"",'issue_title': 'Test title updated','issue_text': 'Test text updated','created_by':'Test created by updated' })
         .end(function (err, res) {
          console.log(res.text);
-          expect(err).to.be.null;
-          expect(res).to.have.status(200);
+          assert.equal(res.status, 200);
           assert.isObject(res);
           assert.include(res.text,'missing _id');
           done()
@@ -148,8 +138,7 @@ test('Update an issue with no fields to update', function(done) {
         .send({ '_id': issue._id})
         .end(function (err, res) {
         /// console.log(res.text);
-          expect(err).to.be.null;
-          expect(res).to.have.status(200);
+          assert.equal(res.status, 200);
           assert.isObject(res);
           assert.include(res.text,"no update field(s) sent");
           done()
@@ -165,8 +154,7 @@ test('Update an issue with an invalid _id', function(done) {
         .send({ _id: '1111',  issue_title: 'Test title updated'})
         .end(function (err, res) {
         /// console.log(res.text);
-          expect(err).to.be.null;
-          expect(res).to.have.status(200);
+          assert.equal(res.status, 200);
           assert.isObject(res);
           assert.include(res.text,"could not update");
           done()     
@@ -181,8 +169,7 @@ test('Delete an issue', function(done) {
         .send({ _id:issue._id })
         .end(function (err, res) {
         /// console.log(res.text);
-          expect(err).to.be.null;
-          expect(res).to.have.status(200);
+          assert.equal(res.status, 200);
           assert.isObject(res);
           assert.include(res.text,"successfully deleted");
           done()
@@ -198,8 +185,7 @@ test('Delete an issue with an invalid _id', function(done) {
         .send({_id: '1111' })
         .end(function (err, res) {
         /// console.log(res.text);
-          expect(err).to.be.null;
-          expect(res).to.have.status(200);
+          assert.equal(res.status, 200);
           assert.isObject(res);
           assert.include(res.text,"could not delete");
           done()
@@ -215,8 +201,7 @@ test('Delete an issue with missing _id', function(done) {
         .send({ })
         .end(function (err, res) {
         /// console.log(res.text);
-          expect(err).to.be.null;
-          expect(res).to.have.status(200);
+  assert.equal(res.status, 200);
           assert.isObject(res);
           assert.include(res.text,"missing _id");
           done()
